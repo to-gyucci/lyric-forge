@@ -8,31 +8,38 @@ from .models import AnalysisResult, Flashcard, Song
 
 DEFAULT_MODEL = "gemma3:27b"
 
-ANALYSIS_PROMPT = """다음 영어 노래 가사를 분석해서 영어 학습에 유용한 표현들을 추출해줘.
+ANALYSIS_PROMPT = """다음 영어 노래 가사를 분석해줘.
 
 가사:
 {lyrics}
 
-각 표현에 대해 다음을 포함해서 JSON 형식으로 응답해:
-- expression: 표현 원문
-- meaning: 한국어 의미
-- example: 다른 상황에서의 예문
-- context: 가사에서 사용된 원문
-- difficulty: beginner/intermediate/advanced
+다음 두 가지를 JSON 형식으로 응답해:
 
-관용표현, 구동사, 일상회화 표현 위주로 5~15개 추출해줘.
+1. summary: 노래의 주제와 줄거리를 2-3문장으로 한국어 요약
+
+2. flashcards: 영어 학습에 유용한 표현들 (5~15개)
+   - expression: 표현 원문
+   - meaning: 한국어 의미
+   - example: 다른 상황에서의 예문
+   - context: 가사에서 사용된 원문
+   - difficulty: beginner/intermediate/advanced
+
+관용표현, 구동사, 일상회화 표현 위주로 추출해줘.
 단순한 단어(love, night 등)는 제외하고 학습 가치가 있는 표현만 선별해.
 {exclude_instruction}
-반드시 아래와 같은 JSON 배열 형식으로만 응답해:
-[
-  {{
-    "expression": "see eye to eye",
-    "meaning": "의견이 일치하다",
-    "example": "We don't see eye to eye on this issue.",
-    "context": "We stopped seeing eye to eye",
-    "difficulty": "intermediate"
-  }}
-]
+반드시 아래와 같은 JSON 형식으로만 응답해:
+{{
+  "summary": "이 노래는 이별 후 혼자 남겨진 상대방에 대한 이야기...",
+  "flashcards": [
+    {{
+      "expression": "see eye to eye",
+      "meaning": "의견이 일치하다",
+      "example": "We don't see eye to eye on this issue.",
+      "context": "We stopped seeing eye to eye",
+      "difficulty": "intermediate"
+    }}
+  ]
+}}
 """
 
 
@@ -42,10 +49,10 @@ class AnalyzerError(Exception):
     pass
 
 
-def extract_json_from_response(response: str) -> List[dict]:
-    """Extract JSON array from LLM response."""
-    # Try to find JSON array in the response
-    json_match = re.search(r"\[[\s\S]*\]", response)
+def extract_json_from_response(response: str) -> dict:
+    """Extract JSON object from LLM response."""
+    # Try to find JSON object in the response
+    json_match = re.search(r"\{[\s\S]*\}", response)
     if json_match:
         try:
             return json.loads(json_match.group())
@@ -103,7 +110,10 @@ def analyze_lyrics(
         raise AnalyzerError(f"Failed to communicate with Ollama: {e}")
 
     content = response["message"]["content"]
-    flashcard_data = extract_json_from_response(content)
+    data = extract_json_from_response(content)
+
+    summary = data.get("summary", "")
+    flashcard_data = data.get("flashcards", [])
 
     flashcards = []
     for item in flashcard_data:
@@ -123,4 +133,4 @@ def analyze_lyrics(
     if not flashcards:
         raise AnalyzerError("No valid flashcards extracted from response")
 
-    return AnalysisResult(song=song, flashcards=flashcards)
+    return AnalysisResult(song=song, summary=summary, flashcards=flashcards)

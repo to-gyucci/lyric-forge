@@ -24,4 +24,5 @@ class Song(BaseModel):
 
 class AnalysisResult(BaseModel):
     song: Song
+    summary: str  # 노래 줄거리/주제 요약
     flashcards: list[Flashcard]
