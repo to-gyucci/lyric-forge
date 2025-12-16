@@ -51,3 +51,4 @@ lyricforge analyze "아티스트" "노래제목" --model gemma3:12b
 - 가상환경(.venv) 사용
 - .env 파일은 gitignore에 포함됨
 - output/ 디렉토리에 생성된 JSON 저장
+- GitHub CLI 필요: `brew install gh` (PR 생성 등)
