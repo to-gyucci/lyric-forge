@@ -23,6 +23,17 @@ def slugify(text: str) -> str:
     return "".join(c if c.isalnum() else "_" for c in text.lower()).strip("_")
 
 
+def load_existing_expressions(file_path: Path) -> list[str]:
+    """Load existing expressions from a JSON file."""
+    if not file_path.exists():
+        return []
+    try:
+        data = json.loads(file_path.read_text(encoding="utf-8"))
+        return [card["expression"] for card in data.get("flashcards", [])]
+    except (json.JSONDecodeError, KeyError):
+        return []
+
+
 @app.command()
 def analyze(
     artist: str = typer.Argument(..., help="Artist name"),
@@ -39,8 +50,22 @@ def analyze(
         "-m",
         help="Ollama model to use for analysis",
     ),
+    exclude: Optional[Path] = typer.Option(
+        None,
+        "-e",
+        "--exclude",
+        help="JSON file with existing flashcards to exclude",
+    ),
 ):
     """Analyze a song's lyrics and generate flashcards."""
+    # Load existing expressions to exclude
+    exclude_expressions: list[str] = []
+    if exclude:
+        exclude_expressions = load_existing_expressions(exclude)
+        if exclude_expressions:
+            console.print(
+                f"[dim]Excluding {len(exclude_expressions)} existing expressions[/dim]"
+            )
 
     # Fetch lyrics
     with Progress(
@@ -74,7 +99,9 @@ def analyze(
             total=None,
         )
         try:
-            result = analyze_lyrics(song, model=model)
+            result = analyze_lyrics(
+                song, model=model, exclude_expressions=exclude_expressions
+            )
         except AnalyzerError as e:
             console.print(f"[red]Error:[/red] {e}")
             raise typer.Exit(1)
