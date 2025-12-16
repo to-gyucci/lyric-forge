@@ -34,6 +34,7 @@ class TestLoadExistingData:
     def test_valid_json(self, tmp_path):
         data = {
             "song": {"title": "Test", "artist": "Artist", "lyrics": "lyrics"},
+            "summary": "테스트 요약",
             "flashcards": [
                 {
                     "expression": "test",
@@ -50,6 +51,7 @@ class TestLoadExistingData:
         result = load_existing_data(file_path)
         assert result is not None
         assert result.song.title == "Test"
+        assert result.summary == "테스트 요약"
         assert len(result.flashcards) == 1
 
     def test_invalid_json(self, tmp_path):
@@ -87,7 +89,7 @@ class TestGetExpressions:
                 difficulty="intermediate",
             ),
         ]
-        result = AnalysisResult(song=song, flashcards=cards)
+        result = AnalysisResult(song=song, summary="테스트", flashcards=cards)
 
         expressions = get_expressions(result)
         assert expressions == ["expr1", "expr2"]
@@ -98,7 +100,7 @@ class TestGetExpressions:
 
     def test_empty_flashcards(self):
         song = Song(title="Test", artist="Artist", lyrics="lyrics")
-        result = AnalysisResult(song=song, flashcards=[])
+        result = AnalysisResult(song=song, summary="", flashcards=[])
 
         expressions = get_expressions(result)
         assert expressions == []

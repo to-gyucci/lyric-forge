@@ -70,11 +70,12 @@ class TestAnalysisResult:
             context="context",
             difficulty="intermediate",
         )
-        result = AnalysisResult(song=song, flashcards=[card])
+        result = AnalysisResult(song=song, summary="테스트 요약", flashcards=[card])
         assert result.song == song
+        assert result.summary == "테스트 요약"
         assert len(result.flashcards) == 1
 
     def test_empty_flashcards(self):
         song = Song(title="Test", artist="Artist", lyrics="lyrics")
-        result = AnalysisResult(song=song, flashcards=[])
+        result = AnalysisResult(song=song, summary="", flashcards=[])
         assert len(result.flashcards) == 0

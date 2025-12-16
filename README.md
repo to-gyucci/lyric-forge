@@ -11,7 +11,9 @@ lyric-forge/
 │   ├── models.py        # 데이터 모델
 │   ├── lyrics.py        # Genius API 가사 크롤링
 │   ├── analyzer.py      # Ollama LLM 분석
+│   ├── database.py      # Supabase 연동
 │   └── cli.py           # CLI 인터페이스
+├── tests/               # 테스트 코드
 ├── output/              # 생성된 JSON 저장
 ├── pyproject.toml
 └── .env                 # API 토큰 (직접 생성)
@@ -33,18 +35,19 @@ ollama serve  # 터미널에서 Ollama 서버 실행 (백그라운드 유지)
 
 # 새 터미널에서 모델 다운로드
 ollama pull gemma3:27b     # 기본 모델 (~17GB)
-# ollama pull gemma3:12b   # 고품질 모델 (~8GB, 선택사항)
+# ollama pull gemma3:12b   # 경량 모델 (~8GB, 선택사항)
 
 # 4. 환경변수 설정
 cp .env.example .env
-# .env 파일에 Genius API 토큰 입력
-# 토큰 발급: https://genius.com/api-clients
+# .env 파일에 API 토큰 입력:
+# - GENIUS_ACCESS_TOKEN: https://genius.com/api-clients
+# - SUPABASE_URL, SUPABASE_KEY: https://supabase.com (선택)
 ```
 
-## 실행
+## 사용법
 
 ```bash
-# 기본 사용
+# 가사 분석 및 플래시카드 생성
 lyricforge analyze "Kygo" "It Ain't Me"
 
 # 출력 파일 지정
@@ -56,9 +59,13 @@ lyricforge analyze "Kygo" "It Ain't Me" --model gemma3:12b
 # 재분석 (기존 표현 제외 + 병합)
 lyricforge analyze "Kygo" "It Ain't Me" -a
 
+# Supabase에 업로드
+lyricforge upload output/kygo_it_ain_t_me.json
+
 # 도움말
 lyricforge --help
 lyricforge analyze --help
+lyricforge upload --help
 ```
 
 ## 출력 예시
@@ -70,6 +77,7 @@ lyricforge analyze --help
     "artist": "Kygo & Selena Gomez",
     "lyrics": "..."
   },
+  "summary": "이 노래는 이별 후 상대방이 혼자 힘든 시간을 보낼 것을 예상하며...",
   "flashcards": [
     {
       "expression": "see eye to eye",
@@ -82,8 +90,22 @@ lyricforge analyze --help
 }
 ```
 
-## 향후 계획
+## 테스트
 
-- **테스트 코드**: 실사용 후 필요 시 추가
-- **Rate limiting**: Genius API 호출 제한 처리
-- **캐싱**: 같은 곡 재분석 방지 (Phase 2 Supabase 연동 시)
+```bash
+# 개발 의존성 설치
+pip install -e ".[dev]"
+
+# 테스트 실행 (커버리지 포함)
+pytest
+```
+
+## 기술 스택
+
+- Python 3.9+
+- lyricsgenius: Genius API
+- ollama: 로컬 LLM (gemma3:27b)
+- typer + rich: CLI
+- pydantic: 데이터 모델
+- supabase: 데이터베이스
+- pytest: 테스트

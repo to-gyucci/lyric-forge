@@ -12,15 +12,15 @@ from lyricforge.models import Song
 
 
 class TestExtractJsonFromResponse:
-    def test_valid_json_array(self):
-        response = '[{"expression": "test", "meaning": "테스트"}]'
+    def test_valid_json_object(self):
+        response = '{"summary": "요약", "flashcards": [{"expression": "test"}]}'
         result = extract_json_from_response(response)
-        assert result == [{"expression": "test", "meaning": "테스트"}]
+        assert result == {"summary": "요약", "flashcards": [{"expression": "test"}]}
 
     def test_json_with_surrounding_text(self):
-        response = 'Here is the result:\n[{"expression": "test"}]\nDone!'
+        response = 'Here is the result:\n{"summary": "요약", "flashcards": []}\nDone!'
         result = extract_json_from_response(response)
-        assert result == [{"expression": "test"}]
+        assert result == {"summary": "요약", "flashcards": []}
 
     def test_invalid_json(self):
         response = "This is not JSON"
@@ -28,10 +28,10 @@ class TestExtractJsonFromResponse:
             extract_json_from_response(response)
         assert "Could not parse JSON" in str(exc_info.value)
 
-    def test_empty_array(self):
-        response = "[]"
+    def test_empty_flashcards(self):
+        response = '{"summary": "", "flashcards": []}'
         result = extract_json_from_response(response)
-        assert result == []
+        assert result == {"summary": "", "flashcards": []}
 
 
 class TestAnalyzeLyrics:
@@ -47,15 +47,18 @@ class TestAnalyzeLyrics:
     def mock_llm_response(self):
         return {
             "message": {
-                "content": """[
-                    {
-                        "expression": "sipping whiskey neat",
-                        "meaning": "위스키를 스트레이트로 마시다",
-                        "example": "He was sipping whiskey neat at the bar.",
-                        "context": "we were sipping whiskey neat",
-                        "difficulty": "intermediate"
-                    }
-                ]"""
+                "content": """{
+                    "summary": "이 노래는 이별에 대한 이야기입니다.",
+                    "flashcards": [
+                        {
+                            "expression": "sipping whiskey neat",
+                            "meaning": "위스키를 스트레이트로 마시다",
+                            "example": "He was sipping whiskey neat at the bar.",
+                            "context": "we were sipping whiskey neat",
+                            "difficulty": "intermediate"
+                        }
+                    ]
+                }"""
             }
         }
 
@@ -66,6 +69,7 @@ class TestAnalyzeLyrics:
         result = analyze_lyrics(sample_song)
 
         assert result.song == sample_song
+        assert result.summary == "이 노래는 이별에 대한 이야기입니다."
         assert len(result.flashcards) == 1
         assert result.flashcards[0].expression == "sipping whiskey neat"
 
@@ -93,7 +97,7 @@ class TestAnalyzeLyrics:
 
     @patch("lyricforge.analyzer.ollama.chat")
     def test_no_valid_flashcards(self, mock_chat, sample_song):
-        mock_chat.return_value = {"message": {"content": "[]"}}
+        mock_chat.return_value = {"message": {"content": '{"summary": "", "flashcards": []}'}}
 
         with pytest.raises(AnalyzerError) as exc_info:
             analyze_lyrics(sample_song)
@@ -104,22 +108,25 @@ class TestAnalyzeLyrics:
         # 하나는 유효, 하나는 invalid difficulty
         mock_chat.return_value = {
             "message": {
-                "content": """[
-                    {
-                        "expression": "valid",
-                        "meaning": "유효",
-                        "example": "example",
-                        "context": "context",
-                        "difficulty": "beginner"
-                    },
-                    {
-                        "expression": "invalid",
-                        "meaning": "무효",
-                        "example": "example",
-                        "context": "context",
-                        "difficulty": "wrong_difficulty"
-                    }
-                ]"""
+                "content": """{
+                    "summary": "테스트 요약",
+                    "flashcards": [
+                        {
+                            "expression": "valid",
+                            "meaning": "유효",
+                            "example": "example",
+                            "context": "context",
+                            "difficulty": "beginner"
+                        },
+                        {
+                            "expression": "invalid",
+                            "meaning": "무효",
+                            "example": "example",
+                            "context": "context",
+                            "difficulty": "wrong_difficulty"
+                        }
+                    ]
+                }"""
             }
         }
 

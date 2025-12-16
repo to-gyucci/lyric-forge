@@ -203,9 +203,7 @@ def upload(
     ) as progress:
         progress.add_task(description="Uploading to Supabase...", total=None)
         try:
-            # summary 필드가 있으면 사용 (AnalysisResult에 없으면 data에서 직접 가져옴)
-            summary = data.get("summary")
-            song_id = upload_analysis(result, summary=summary)
+            song_id = upload_analysis(result)
         except DatabaseError as e:
             console.print(f"[red]Error:[/red] {e}")
             raise typer.Exit(1)

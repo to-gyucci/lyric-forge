@@ -31,12 +31,11 @@ def get_client() -> Client:
     return create_client(url, key)
 
 
-def upload_analysis(result: AnalysisResult, summary: Optional[str] = None) -> str:
+def upload_analysis(result: AnalysisResult) -> str:
     """분석 결과를 Supabase에 업로드.
 
     Args:
-        result: 분석 결과 (Song + Flashcards)
-        summary: 노래 요약 (선택)
+        result: 분석 결과 (Song + summary + Flashcards)
 
     Returns:
         생성된 song_id (UUID)
@@ -48,7 +47,7 @@ def upload_analysis(result: AnalysisResult, summary: Optional[str] = None) -> st
         "title": result.song.title,
         "artist": result.song.artist,
         "lyrics": result.song.lyrics,
-        "summary": summary,
+        "summary": result.summary,
     }
 
     song_response = client.table("songs").insert(song_data).execute()
