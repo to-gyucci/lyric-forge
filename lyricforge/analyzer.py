@@ -1,5 +1,6 @@
 import json
 import re
+from typing import List, Optional
 
 import ollama
 
@@ -41,7 +42,7 @@ class AnalyzerError(Exception):
     pass
 
 
-def extract_json_from_response(response: str) -> list[dict]:
+def extract_json_from_response(response: str) -> List[dict]:
     """Extract JSON array from LLM response."""
     # Try to find JSON array in the response
     json_match = re.search(r"\[[\s\S]*\]", response)
@@ -63,7 +64,7 @@ def extract_json_from_response(response: str) -> list[dict]:
 def analyze_lyrics(
     song: Song,
     model: str = DEFAULT_MODEL,
-    exclude_expressions: list[str] | None = None,
+    exclude_expressions: Optional[List[str]] = None,
 ) -> AnalysisResult:
     """Analyze lyrics using Ollama LLM.
 
