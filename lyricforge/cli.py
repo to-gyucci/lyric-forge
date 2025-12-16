@@ -9,6 +9,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from .analyzer import DEFAULT_MODEL, AnalyzerError, analyze_lyrics
+from .database import DatabaseError, check_song_exists, upload_analysis
 from .lyrics import LyricsError, fetch_lyrics
 from .models import AnalysisResult, Flashcard
 
@@ -150,6 +151,64 @@ def analyze(
     )
 
     console.print(f"\n[green]Saved to:[/green] {output}")
+
+
+@app.command()
+def upload(
+    file_path: Path = typer.Argument(..., help="JSON file path to upload"),
+    force: bool = typer.Option(
+        False,
+        "-f",
+        "--force",
+        help="Upload even if song already exists in database",
+    ),
+):
+    """Upload analysis result to Supabase."""
+    if not file_path.exists():
+        console.print(f"[red]Error:[/red] File not found: {file_path}")
+        raise typer.Exit(1)
+
+    # Load JSON file
+    try:
+        data = json.loads(file_path.read_text(encoding="utf-8"))
+        result = AnalysisResult.model_validate(data)
+    except (json.JSONDecodeError, Exception) as e:
+        console.print(f"[red]Error:[/red] Invalid JSON file: {e}")
+        raise typer.Exit(1)
+
+    # Check if song already exists
+    if not force:
+        existing_id = check_song_exists(result.song.artist, result.song.title)
+        if existing_id:
+            console.print(
+                f"[yellow]Warning:[/yellow] Song already exists (id: {existing_id})\n"
+                "Use --force to upload anyway"
+            )
+            raise typer.Exit(1)
+
+    # Upload to Supabase
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        progress.add_task(description="Uploading to Supabase...", total=None)
+        try:
+            # summary 필드가 있으면 사용 (AnalysisResult에 없으면 data에서 직접 가져옴)
+            summary = data.get("summary")
+            song_id = upload_analysis(result, summary=summary)
+        except DatabaseError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+
+    console.print(
+        Panel(
+            f"[green]Uploaded:[/green] {result.song.title} by {result.song.artist}\n"
+            f"[dim]Song ID: {song_id}[/dim]\n"
+            f"[dim]Flashcards: {len(result.flashcards)}[/dim]",
+            title="Upload Complete",
+        )
+    )
 
 
 @app.command()
