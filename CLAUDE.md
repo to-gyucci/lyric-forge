@@ -36,6 +36,11 @@ source .venv/bin/activate
 lyricforge analyze "아티스트" "노래제목"
 lyricforge analyze "아티스트" "노래제목" -o output/파일명.json
 lyricforge analyze "아티스트" "노래제목" --model gemma3:12b
+lyricforge analyze "아티스트" "노래제목" -a  # 기존 표현 제외 + 병합
+
+# 도움말
+lyricforge --help
+lyricforge analyze --help
 ```
 
 ## 코드 컨벤션
@@ -52,3 +57,4 @@ lyricforge analyze "아티스트" "노래제목" --model gemma3:12b
 - .env 파일은 gitignore에 포함됨
 - output/ 디렉토리에 생성된 JSON 저장
 - GitHub CLI 필요: `brew install gh` (PR 생성 등)
+- 한국어 응답 시 반말 사용 (토큰 절약, 예의는 지키면서)

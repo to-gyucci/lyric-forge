@@ -52,6 +52,13 @@ lyricforge analyze "Kygo" "It Ain't Me" -o output/it_aint_me.json
 
 # 다른 모델 사용
 lyricforge analyze "Kygo" "It Ain't Me" --model gemma3:12b
+
+# 재분석 (기존 표현 제외 + 병합)
+lyricforge analyze "Kygo" "It Ain't Me" -a
+
+# 도움말
+lyricforge --help
+lyricforge analyze --help
 ```
 
 ## 출력 예시
