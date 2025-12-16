@@ -79,6 +79,11 @@ def analyze_lyrics(song: Song, model: str = DEFAULT_MODEL) -> AnalysisResult:
         response = ollama.chat(
             model=model,
             messages=[{"role": "user", "content": prompt}],
+            options={
+                "num_ctx": 8192,  # 컨텍스트 윈도우 확장
+                "num_gpu": 99,  # GPU 레이어 최대화 (M3 Max)
+            },
+            keep_alive="10m",  # 모델 메모리 상주 (재호출 시 로딩 생략)
         )
     except Exception as e:
         raise AnalyzerError(f"Failed to communicate with Ollama: {e}")
