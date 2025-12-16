@@ -69,3 +69,8 @@ lyricforge --help
 - output/ 디렉토리에 생성된 JSON 저장
 - GitHub CLI 필요: `brew install gh`
 - 한국어 응답 시 반말 사용 (토큰 절약, 예의는 지키면서)
+
+## Git 규칙
+
+- **main 브랜치 직접 푸시 금지**: 항상 feature 브랜치에서 작업 후 PR 생성
+- 커밋 전 "main에 바로 푸시할까, PR 만들까?" 반드시 확인
