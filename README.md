@@ -74,3 +74,9 @@ lyricforge analyze "Kygo" "It Ain't Me" --model gemma3:12b
   ]
 }
 ```
+
+## 향후 계획
+
+- **테스트 코드**: 실사용 후 필요 시 추가
+- **Rate limiting**: Genius API 호출 제한 처리
+- **캐싱**: 같은 곡 재분석 방지 (Phase 2 Supabase 연동 시)

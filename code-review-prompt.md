@@ -16,69 +16,10 @@
 
 ---
 
-## 보안 체크
+## 보안 / 시크릿 체크
 
 ```
 다음 코드의 보안 취약점을 검토해줘.
-
-[코드 붙여넣기]
-
-확인 사항:
-- [ ] 하드코딩된 시크릿/API 키/비밀번호
-- [ ] SQL Injection 가능성
-- [ ] XSS (Cross-Site Scripting) 취약점
-- [ ] 사용자 입력 검증 누락
-- [ ] 민감한 정보 로깅
-- [ ] 안전하지 않은 의존성
-- [ ] 인증/인가 로직 결함
-- [ ] 경로 탐색 (Path Traversal) 취약점
-```
-
----
-
-## 라이선스 체크
-
-```
-다음 프로젝트의 라이선스 호환성을 검토해줘.
-
-사용 중인 라이브러리:
-- [라이브러리명] (라이선스)
-- [라이브러리명] (라이선스)
-
-프로젝트 라이선스: [MIT / Apache 2.0 / GPL 등]
-
-확인 사항:
-- [ ] GPL 라이브러리가 포함되어 있는가? (전염성 라이선스)
-- [ ] 상업적 사용 제한이 있는 라이브러리가 있는가?
-- [ ] 저작자 표시 의무가 있는가?
-- [ ] 라이선스 충돌이 있는가?
-```
-
----
-
-## Python 프로젝트 전용
-
-```
-다음 Python 코드를 리뷰해줘.
-
-[코드 붙여넣기]
-
-확인 사항:
-- [ ] PEP 8 스타일 준수
-- [ ] Type hints 사용
-- [ ] 예외 처리 적절성
-- [ ] docstring 작성 여부
-- [ ] 불필요한 import
-- [ ] 환경 변수로 설정 분리 (.env)
-- [ ] requirements.txt / pyproject.toml 정확성
-```
-
----
-
-## API 키 / 시크릿 체크
-
-```
-다음 코드에서 노출되면 안 되는 정보가 있는지 확인해줘.
 
 [코드 붙여넣기]
 
@@ -87,6 +28,7 @@
 - [ ] .env 파일이 .gitignore에 포함되어 있는가?
 - [ ] 로그에 민감 정보가 출력되지 않는가?
 - [ ] 에러 메시지에 내부 정보가 노출되지 않는가?
+- [ ] 사용자 입력 검증이 적절한가?
 ```
 
 ---
@@ -99,7 +41,7 @@ PR 올리기 전 다음 코드를 검토해줘.
 [코드 붙여넣기]
 
 최종 체크리스트:
-- [ ] 불필요한 console.log / print 제거
+- [ ] 불필요한 print / console.log 제거
 - [ ] 주석 처리된 코드 제거
 - [ ] TODO 주석 확인
 - [ ] 테스트 코드 작성 여부
@@ -117,16 +59,17 @@ LyricForge 프로젝트 코드를 리뷰해줘.
 
 [코드 붙여넣기]
 
-프로젝트 특이사항:
-- Genius API Access Token 사용
-- Ollama 로컬 LLM 연동
-- 가사 데이터 처리
+프로젝트 컨텍스트:
+- Python 3.9+ / typer + rich CLI
+- Genius API (lyricsgenius) + Ollama LLM (gemma3:27b)
+- Pydantic 데이터 모델 사용
+- 커스텀 Exception: LyricsError, AnalyzerError
 
 확인 사항:
-- [ ] GENIUS_ACCESS_TOKEN이 환경 변수로 처리되었는가?
-- [ ] Ollama 연결 실패 시 에러 핸들링
-- [ ] 가사 없는 곡 처리 로직
-- [ ] LLM 응답 파싱 실패 처리
-- [ ] Rate limiting 고려 (Genius API)
-- [ ] JSON 출력 포맷 일관성
+- [ ] GENIUS_ACCESS_TOKEN이 .env로 처리되었는가?
+- [ ] Ollama 연결 실패 시 에러 핸들링 (AnalyzerError)
+- [ ] 가사 없는 곡 처리 (LyricsError)
+- [ ] LLM 응답 JSON 파싱 실패 처리
+- [ ] 타입 힌트 사용 여부
+- [ ] JSON 출력 포맷 일관성 (AnalysisResult 모델)
 ```
