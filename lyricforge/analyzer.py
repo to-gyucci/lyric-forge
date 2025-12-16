@@ -1,5 +1,6 @@
 import json
 import re
+from typing import List, Optional
 
 import ollama
 
@@ -21,7 +22,7 @@ ANALYSIS_PROMPT = """다음 영어 노래 가사를 분석해서 영어 학습�
 
 관용표현, 구동사, 일상회화 표현 위주로 5~15개 추출해줘.
 단순한 단어(love, night 등)는 제외하고 학습 가치가 있는 표현만 선별해.
-
+{exclude_instruction}
 반드시 아래와 같은 JSON 배열 형식으로만 응답해:
 [
   {{
@@ -41,7 +42,7 @@ class AnalyzerError(Exception):
     pass
 
 
-def extract_json_from_response(response: str) -> list[dict]:
+def extract_json_from_response(response: str) -> List[dict]:
     """Extract JSON array from LLM response."""
     # Try to find JSON array in the response
     json_match = re.search(r"\[[\s\S]*\]", response)
@@ -60,12 +61,17 @@ def extract_json_from_response(response: str) -> list[dict]:
         )
 
 
-def analyze_lyrics(song: Song, model: str = DEFAULT_MODEL) -> AnalysisResult:
+def analyze_lyrics(
+    song: Song,
+    model: str = DEFAULT_MODEL,
+    exclude_expressions: Optional[List[str]] = None,
+) -> AnalysisResult:
     """Analyze lyrics using Ollama LLM.
 
     Args:
         song: Song object containing lyrics to analyze
         model: Ollama model to use (default: gemma3:27b)
+        exclude_expressions: List of expressions to exclude from analysis
 
     Returns:
         AnalysisResult with song and extracted flashcards
@@ -73,7 +79,15 @@ def analyze_lyrics(song: Song, model: str = DEFAULT_MODEL) -> AnalysisResult:
     Raises:
         AnalyzerError: If analysis fails
     """
-    prompt = ANALYSIS_PROMPT.format(lyrics=song.lyrics)
+    exclude_instruction = ""
+    if exclude_expressions:
+        expressions_list = ", ".join(f'"{e}"' for e in exclude_expressions)
+        exclude_instruction = f"\n다음 표현들은 이미 추출했으니 제외해줘: {expressions_list}\n"
+
+    prompt = ANALYSIS_PROMPT.format(
+        lyrics=song.lyrics,
+        exclude_instruction=exclude_instruction,
+    )
 
     try:
         response = ollama.chat(

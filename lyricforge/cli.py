@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -10,10 +10,12 @@ from rich.table import Table
 
 from .analyzer import DEFAULT_MODEL, AnalyzerError, analyze_lyrics
 from .lyrics import LyricsError, fetch_lyrics
+from .models import AnalysisResult, Flashcard
 
 app = typer.Typer(
     name="lyricforge",
     help="Analyze English song lyrics and generate flashcards for language learning",
+    add_completion=False,
 )
 console = Console()
 
@@ -21,6 +23,24 @@ console = Console()
 def slugify(text: str) -> str:
     """Convert text to a safe filename."""
     return "".join(c if c.isalnum() else "_" for c in text.lower()).strip("_")
+
+
+def load_existing_data(file_path: Path) -> Optional[AnalysisResult]:
+    """Load existing analysis result from a JSON file."""
+    if not file_path.exists():
+        return None
+    try:
+        data = json.loads(file_path.read_text(encoding="utf-8"))
+        return AnalysisResult.model_validate(data)
+    except (json.JSONDecodeError, Exception):
+        return None
+
+
+def get_expressions(result: Optional[AnalysisResult]) -> List[str]:
+    """Get expression list from analysis result."""
+    if not result:
+        return []
+    return [card.expression for card in result.flashcards]
 
 
 @app.command()
@@ -39,8 +59,30 @@ def analyze(
         "-m",
         help="Ollama model to use for analysis",
     ),
+    append: bool = typer.Option(
+        False,
+        "-a",
+        "--append",
+        help="Append new expressions to existing file (excludes duplicates)",
+    ),
 ):
     """Analyze a song's lyrics and generate flashcards."""
+    # Determine output path early for append mode
+    if output is None:
+        output_dir = Path("output")
+        output_dir.mkdir(exist_ok=True)
+        output = output_dir / f"{slugify(artist)}_{slugify(title)}.json"
+
+    # Load existing data if append mode
+    existing_result: Optional[AnalysisResult] = None
+    exclude_expressions: List[str] = []
+    if append:
+        existing_result = load_existing_data(output)
+        exclude_expressions = get_expressions(existing_result)
+        if exclude_expressions:
+            console.print(
+                f"[dim]Appending mode: excluding {len(exclude_expressions)} existing expressions[/dim]"
+            )
 
     # Fetch lyrics
     with Progress(
@@ -74,10 +116,20 @@ def analyze(
             total=None,
         )
         try:
-            result = analyze_lyrics(song, model=model)
+            result = analyze_lyrics(
+                song, model=model, exclude_expressions=exclude_expressions
+            )
         except AnalyzerError as e:
             console.print(f"[red]Error:[/red] {e}")
             raise typer.Exit(1)
+
+    # Merge with existing if append mode
+    if append and existing_result:
+        merged_flashcards = existing_result.flashcards + result.flashcards
+        result = AnalysisResult(song=result.song, flashcards=merged_flashcards)
+        console.print(
+            f"[dim]Merged: {len(existing_result.flashcards)} existing + {len(result.flashcards) - len(existing_result.flashcards)} new[/dim]"
+        )
 
     # Display results
     table = Table(title=f"Flashcards ({len(result.flashcards)} expressions)")
@@ -91,12 +143,6 @@ def analyze(
     console.print(table)
 
     # Save to file
-    if output is None:
-        output_dir = Path("output")
-        output_dir.mkdir(exist_ok=True)
-        filename = f"{slugify(song.artist)}_{slugify(song.title)}.json"
-        output = output_dir / filename
-
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         result.model_dump_json(indent=2, by_alias=True),
