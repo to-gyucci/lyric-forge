@@ -126,10 +126,19 @@ def analyze(
     # Merge with existing if append mode
     if append and existing_result:
         merged_flashcards = existing_result.flashcards + result.flashcards
-        result = AnalysisResult(song=result.song, flashcards=merged_flashcards)
+        # 기존 summary 유지
+        result = AnalysisResult(
+            song=result.song,
+            summary=existing_result.summary,
+            flashcards=merged_flashcards,
+        )
         console.print(
             f"[dim]Merged: {len(existing_result.flashcards)} existing + {len(result.flashcards) - len(existing_result.flashcards)} new[/dim]"
         )
+
+    # Display summary
+    if result.summary:
+        console.print(Panel(result.summary, title="Summary"))
 
     # Display results
     table = Table(title=f"Flashcards ({len(result.flashcards)} expressions)")
