@@ -149,14 +149,14 @@ ollama pull gemma3:27b
 
 ## TODO
 
-### Phase 1: Mac CLI 도구
-- [ ] Genius 계정 생성 및 Access Token 발급
-- [ ] Ollama 설치 및 gemma3:27b 모델 다운로드
-- [ ] Python 프로젝트 초기화 (pyproject.toml)
-- [ ] lyricsgenius로 가사 가져오기 구현
-- [ ] Ollama 연동 및 LLM 분석 구현
-- [ ] JSON 출력 구현
-- [ ] CLI 인터페이스 구현 (click 또는 typer)
+### Phase 1: Mac CLI 도구 ✅
+- [x] Genius 계정 생성 및 Access Token 발급
+- [x] Ollama 설치 및 gemma3:27b 모델 다운로드
+- [x] Python 프로젝트 초기화 (pyproject.toml)
+- [x] lyricsgenius로 가사 가져오기 구현
+- [x] Ollama 연동 및 LLM 분석 구현
+- [x] JSON 출력 구현
+- [x] CLI 인터페이스 구현 (typer)
 - [ ] 테스트 (Kygo - It Ain't Me)
 
 ### Phase 2: Supabase 연동
